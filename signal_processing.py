@@ -9,7 +9,7 @@ from scipy import signal
 from scipy.io.wavfile import write as wav_write
 
 sys.path.append('.')
-from local.utils import segment_axis
+from utils import segment_axis
 
 
 def _samples_to_stft_frames(samples, size, shift):

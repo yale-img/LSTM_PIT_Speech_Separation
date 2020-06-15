@@ -13,20 +13,28 @@ import os
 import sys
 import time
 
+import warnings
+warnings.filterwarnings('ignore',category=FutureWarning)
+warnings.filterwarnings('ignore', category=DeprecationWarning)
+
 import numpy as np
 import tensorflow as tf
 
 sys.path.append('.')
 
-from io_funcs.signal_processing import audiowrite, stft, istft
-import io_funcs.kaldi_io as kio
-from model.blstm import LSTM
-from io_funcs.tfrecords_io import get_padded_batch
-from local.utils import pp, show_all_variables
-from io_funcs.signal_processing import *
+from signal_processing import audiowrite, stft, istft
+import kaldi_io as kio
+from blstm import LSTM
+from tfrecords_io import get_padded_batch
+from utils import pp, show_all_variables
+from signal_processing import *
+
+import warnings
+warnings.filterwarnings("ignore")
+
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 FLAGS = None
-
 
 def read_list_file(name, batch_size):
     file_name = os.path.join(FLAGS.lists_dir, name + ".lst")
@@ -45,7 +53,9 @@ def read_list_file(name, batch_size):
             sys.exit(-1)
         tfrecords_lst.append(tfrecords_name)
 
-    num_batches = int(len(tfrecords_lst) / batch_size + 0.5)
+    
+    num_batches = 1#    int(len(tfrecords_lst) / batch_size + 0.5)
+    print("****************************************tfrecords list", len(tfrecords_lst))
     return tfrecords_lst, num_batches
 
 
@@ -157,6 +167,8 @@ def eval_one_epoch(sess, coord, val_model, val_num_batches):
             break
         loss = sess.run(val_model._loss)
         val_loss += loss
+
+    #print("this is valnumbatches: " , val_num_batches , "and batch size: " , FLAGS.batch_size)
     val_loss /= (val_num_batches * FLAGS.batch_size)
 
     return val_loss
@@ -247,16 +259,16 @@ def train():
                     # Logging train loss along with validation loss
                     loss_prev = val_loss
                     best_path = ckpt_path
-                    tf.logging.info("ITERATION %d: TRAIN AVG.LOSS %.4f, (lrate%e) CROSSVAL"
-                        " AVG.LOSS %.4f, %s (%s), TIME USED: %.2fs" % (
-                        epoch + 1, tr_loss, FLAGS.learning_rate, val_loss,
-                        "nnet accepted", ckpt_name, (end_time - start_time) / 1))
+                    # tf.logging.info("ITERATION %d: TRAIN AVG.LOSS %.4f, (lrate%e) CROSSVAL"
+                    #     " AVG.LOSS %.4f, %s (%s), TIME USED: %.2fs" % (
+                    #     epoch + 1, tr_loss, FLAGS.learning_rate, val_loss,
+                    #     "nnet accepted", ckpt_name, (end_time - start_time) / 1))
                 else:
                     tr_model.saver.restore(sess, best_path)
-                    tf.logging.info("ITERATION %d: TRAIN AVG.LOSS %.4f, (lrate%e) CROSSVAL"
-                        " AVG.LOSS %.4f, %s, (%s), TIME USED: %.2fs" % (
-                        epoch + 1, tr_loss, FLAGS.learning_rate, val_loss,
-                        "nnet rejected", ckpt_name, (end_time - start_time) / 1))
+                    # tf.logging.info("ITERATION %d: TRAIN AVG.LOSS %.4f, (lrate%e) CROSSVAL"
+                    #     " AVG.LOSS %.4f, %s, (%s), TIME USED: %.2fs" % (
+                    #     epoch + 1, tr_loss, FLAGS.learning_rate, val_loss,
+                    #     "nnet rejected", ckpt_name, (end_time - start_time) / 1))
 
                 # Start halving when improvement is low
                 if rel_impr < FLAGS.start_halving_impr:

@@ -17,6 +17,7 @@ tr_wav.lst format:
 import os
 import argparse
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 parser = argparse.ArgumentParser(description='Generate wav file to .lst')
 parser.add_argument('--wav_dir', type=str, default=True, help='Address of a wav file folder.')
@@ -29,6 +30,7 @@ output_lst = args.output_lst  # "./lists/tr_wav.lst"
 wav_files = os.listdir(wav_dir)
 with open(output_lst, 'w') as f:
     for file in wav_files:
-        f.write(file + "\n")
+        if(not file.endswith('.DS_Store')):
+            f.write(file + "\n")
 
 print("Generate wav file to .lst done!")

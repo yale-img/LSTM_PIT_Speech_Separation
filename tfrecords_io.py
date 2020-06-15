@@ -7,7 +7,9 @@
 """Utility functions for working with tf.train.SequenceExamples."""
 
 import tensorflow as tf
+import os
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 def get_padded_batch(file_list, batch_size, input_size, output_size,
                      num_enqueuing_threads=4, num_epochs=1, shuffle=True):

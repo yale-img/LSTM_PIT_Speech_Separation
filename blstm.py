@@ -12,11 +12,14 @@ from __future__ import print_function
 import sys
 import time
 
+import warnings
+warnings.filterwarnings('ignore',category=FutureWarning)
+warnings.filterwarnings('ignore', category=DeprecationWarning)
+
 import tensorflow as tf
 from tensorflow.contrib.rnn.python.ops import rnn
 import numpy as np
-
-
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 class LSTM(object):
     def __init__(self, config, inputs, labels, lengths, genders, infer=False):
         self._inputs = inputs

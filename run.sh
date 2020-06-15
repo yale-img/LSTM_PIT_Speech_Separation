@@ -15,7 +15,7 @@ speaker_num="2speaker"
 lists_dir=storage/lists   # lists_dir is used to store some necessary files lists
 tfrecords_dir=storage/tfrecords 
 mkdir -p $lists_dir
-wav_dir=～Dataset/WSJ0-mix/mix/data/2speakers_0dB/wav8k/min 
+wav_dir=data_small/2speakers/wav8k/min 
 
 # audio and stft configs
 sample_rate=8000
@@ -27,6 +27,7 @@ window_shift=128
 rnn_num_layers=3
 rnn_size=496
 model_type=LSTM
+batch_size=32
 input_size=129
 output_size=129
 keep_prob=0.8
@@ -41,7 +42,7 @@ assignment=def
 name=${prefix}_${model_type}_${rnn_num_layers}_${rnn_size}_${speaker_num}_${sample_rate_name}_"0dB"
 TF_save_dir=storage/TFCheckpoint/$name
 separated_dir=storage/separated/${name}_${assignment} 
-resume_training=true
+resume_training=false
 
 # note: we want to use gender information, but we didn't use in this version. 
 # but when we prepared our data, we stored the gender information (maybe useful in the future).
@@ -54,13 +55,13 @@ resume_training=true
 if [ $step -le 0 ]; then
 	echo -e "\nGenerate wav file to .lst file at `time_program`."
     for x in tr cv tt; do
-        python local/make_wav_list.py --wav_dir ${wav_dir}/$x/mix --output_lst ${lists_dir}/${x}_wav.lst
+        python make_wav_list.py --wav_dir ${wav_dir}/$x/mix --output_lst ${lists_dir}/${x}_wav.lst
     done
 
 	# tfrecords are stored in data/tfrecords/{tr, cv, tt}_tfrecord/
 	echo -e "\nfrom wav file generate {tr, cv, tt}_tfrecord/*.tfrecords at `time_program`."
     for x in tr cv tt; do
-        python -u local/gen_tfrecords.py --gender_list local/wsj0-train-spkrinfo.txt \
+        python -u gen_tfrecords.py --gender_list wsj0-train-spkrinfo.txt \
 		--window_size $window_size --window_shift $window_shift --sample_rate $sample_rate \
 		${wav_dir}/$x/ ${lists_dir}/${x}_wav.lst ${tfrecords_dir}/${x}_tfrecord &
     done
@@ -87,7 +88,7 @@ if [ $step -le 1 ]; then
     decode=0
     batch_size=25
 
-    tr_cmd="python -u run_lstm.py --lists_dir=$lists_dir  --rnn_num_layers=$rnn_num_layers --batch_size=$batch_size \
+    tr_cmd="python -W -u run_lstm.py --lists_dir=$lists_dir  --rnn_num_layers=$rnn_num_layers --batch_size=$batch_size \
     --rnn_size=$rnn_size --decode=$decode --learning_rate=$learning_rate --TF_save_dir=$TF_save_dir \
     --separated_dir=$separated_dir --keep_prob=$keep_prob --input_size=$input_size --output_size=$output_size  \
     --assign=$assignment --resume_training=$resume_training --model_type=$model_type --halving_factor=$halving_factor"
@@ -97,21 +98,21 @@ if [ $step -le 1 ]; then
 fi
 
 
-#####################################################################################################
-#   NOTE for STEP 2:     Decode                                                                   ###
-#       1. Make sure that you configure the RNN/data_dir/model_dir/ all rights                    ###
-#####################################################################################################
-if [ $step -le 2 ]; then
-    echo -e "\nStart Decoding at `time_program`.\n"
-    decode=1
-    batch_size=30
-    tr_cmd="python -u run_lstm.py --lists_dir=$lists_dir  --rnn_num_layers=$rnn_num_layers --batch_size=$batch_size \
-    --decode=$decode --learning_rate=$learning_rate --TF_save_dir=$TF_save_dir --separated_dir=$separated_dir --keep_prob=$keep_prob \
-    --input_size=$input_size --output_size=$output_size  --assign=$assignment --resume_training=$resume_training --rnn_size=$rnn_size \
-    --model_type=$model_type --czt_dim=128 --window_size=$window_size --window_shift=$window_shift --sample_rate=$sample_rate"
+# #####################################################################################################
+# #   NOTE for STEP 2:     Decode                                                                   ###
+# #       1. Make sure that you configure the RNN/data_dir/model_dir/ all rights                    ###
+# #####################################################################################################
+# if [ $step -le 2 ]; then
+#     echo -e "\nStart Decoding at `time_program`.\n"
+#     decode=1
+#     batch_size=30
+#     tr_cmd="python -u run_lstm.py --lists_dir=$lists_dir  --rnn_num_layers=$rnn_num_layers --batch_size=$batch_size \
+#     --decode=$decode --learning_rate=$learning_rate --TF_save_dir=$TF_save_dir --separated_dir=$separated_dir --keep_prob=$keep_prob \
+#     --input_size=$input_size --output_size=$output_size  --assign=$assignment --resume_training=$resume_training --rnn_size=$rnn_size \
+#     --model_type=$model_type --czt_dim=128 --window_size=$window_size --window_shift=$window_shift --sample_rate=$sample_rate"
 
-    #echo $tr_cmd
-    CUDA_VISIBLE_DEVICES=$gpu_id TF_CPP_MIN_LOG_LEVEL=$TF_CPP_MIN_LOG_LEVEL $tr_cmd
-fi
+#     #echo $tr_cmd
+#     CUDA_VISIBLE_DEVICES=$gpu_id TF_CPP_MIN_LOG_LEVEL=$TF_CPP_MIN_LOG_LEVEL $tr_cmd
+# fi
 
-echo -e "\nAll programs finish running at `time_program`."
+# echo -e "\nAll programs finish running at `time_program`."

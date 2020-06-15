@@ -4,10 +4,12 @@ import os, sys
 sys.path.append('.')
 # After you read kaldi feats, you can refer to function "gen_feats" in this file to convert them to tfrecords.
 import multiprocessing
-from io_funcs.signal_processing import audiowrite, stft, audioread
-from local.utils import mkdir_p
+from signal_processing import audiowrite, stft, audioread
+from utils import mkdir_p
 import tensorflow as tf
 import numpy as np
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 parser = argparse.ArgumentParser(description='Generate TFRecords files')
 parser.add_argument('wav_dir', help='The parent dit of mix,s1,s2')
@@ -78,8 +80,8 @@ def gen_feats(wav_name, sample_rate, window_size, window_shift):
     tfrecords_name = tfrecord_dir + '/' + part_name + '.tfrecords'
     #print(tfrecords_name)
 
-    with tf.python_io.TFRecordWriter(tfrecords_name) as writer:
-        tf.logging.info("Writing utterance %s" %tfrecords_name)
+    with tf.io.TFRecordWriter(tfrecords_name) as writer:
+        tf.compat.v1.logging.info("Writing utterance %s" %tfrecords_name)
 
         mix_abs = np.abs(mix_stft) 
         mix_angle = np.angle(mix_stft)
